@@ -1,6 +1,6 @@
 #pragma once
 #include "Node.h"
-#include "NodeComparer.h"
+#include "IKeyComparer.h"
 
 namespace PM {
 
@@ -12,15 +12,23 @@ namespace PM {
 	class BinarySearchTree
 	{
 	public:
-		BinarySearchTree( const INodeComparer<TKey>& comparer );
+		// Creates the BTS. The provided comparer is used to determine
+		// relation ship between the keys.
+		BinarySearchTree( const IKeyComparer<TKey>& comparer );
 		virtual ~BinarySearchTree();
-		bool Add( TKey key, TData data );
-		bool Find( TKey key, TData& data );
-		void Delete( TKey key );
 
-		typedef Node<TKey, TData> NodeType;
+		// Adds the data based on the provided key
+		bool Add( TKey key, TData data );
+
+		// Finds data, based on the key.
+		// The data is provided on the output parameter 'data'.
+		bool Find( TKey key, TData& data );
+
+		// Delets a key from the tree
+		void Delete( TKey key );
 	private:
-		const INodeComparer<TKey>& myComparer;
+		typedef Node<TKey, TData> NodeType;
+		const IKeyComparer<TKey>& myComparer;
 		NodeType* root;
 		NodeType* FindNode( TKey key );
 	};
@@ -30,7 +38,7 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	BinarySearchTree<TKey,TData>::BinarySearchTree( const INodeComparer<TKey>& comparer )
+	BinarySearchTree<TKey,TData>::BinarySearchTree( const IKeyComparer<TKey>& comparer )
 		: myComparer( comparer ), root( 0 )
 	{
 
@@ -56,7 +64,7 @@ namespace PM {
 		bool res = false;
 		if( root == 0 ) {
 			// First node
-			root = new NodeType( myComparer, __nullptr, key, data );
+			root = NodeType::Create( myComparer, nullptr, key, data );
 			if( root ) {
 				res = true;
 			}
@@ -76,7 +84,7 @@ namespace PM {
 	template<typename TKey, typename TData>
 	Node<TKey,TData>* BinarySearchTree<TKey, TData>::FindNode( TKey key )
 	{	
-		NodeType* node = __nullptr;
+		NodeType* node = nullptr;
 
 		if( root ) {
 			node = root->FindNode( key );
@@ -110,12 +118,6 @@ namespace PM {
 	template<typename TKey, typename TData>
 	void BinarySearchTree<TKey, TData>::Delete( TKey key )
 	{
-		// Three possible scenarios exists:
-		// 1. No children - simply remove it.
-		// 2. One child - remove it, letting the parent point to the child.
-		// 3. Two children - replace it with the node with next biggest key. Find the left most child in the right tree.
-		// If the node to remove is the root, we must update our root-pointer aswell.
-
 		// First, find the node to remove
 		NodeType* toRemove = FindNode( key );
 		if( toRemove ) {

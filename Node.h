@@ -1,5 +1,5 @@
 #pragma once
-#include "NodeComparer.h"
+#include "IKeyComparer.h"
 
 namespace PM {
 
@@ -11,28 +11,36 @@ namespace PM {
 	class Node
 	{
 	public:
-		Node( const INodeComparer<TKey>& comparer, Node<TKey, TData>* parent, TKey k, TData d );
 		virtual ~Node();
 		TData Get();
 
 		typedef Node<TKey, TData> NodeType;
 
+		// Adds the key/data to the tree
 		bool Add( TKey key, TData data );
-		Node<TKey, TData>* FindNode( TKey key );
+		// Finds the node based on the key
+		Node<TKey, TData>* FindNode( const TKey key );
+		// Removes the node
 		Node<TKey, TData>* Remove();
+		// Counts the children of the node.
 		int CountChildren();
+
+		// Static factory function, used together with the private constructor to force items to be created on the heap.
+		// Update this when a custom memory manager is used. Also see DeleteSelf().
+		static NodeType* Create( const IKeyComparer<TKey>& comparer, Node<TKey, TData>* parent, TKey k, TData d );
 	private:
 
 		TKey myKey;
 		TData myData;
 		NodeType* less;
 		NodeType* greater;
-		const INodeComparer<TKey>& myComparer;
-		Node<TKey, TData>* myParent;
+		NodeType* myParent;
+		const IKeyComparer<TKey>& myComparer;		
 
+		Node( const IKeyComparer<TKey>& comparer, Node<TKey, TData>* parent, TKey k, TData d );
 		void ReplaceWith( Node<TKey, TData>* node );
 		void Skip( NodeType* toSkip, NodeType* next );
-		void Clear();
+		void DeleteSelf();
 
 		// Disable copying
 		Node<TKey, TData>( const NodeType& );
@@ -44,13 +52,13 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	Node<TKey, TData>::Node( const INodeComparer<TKey>& comparer, Node<TKey, TData>* parent, TKey key, TData data )
+	Node<TKey, TData>::Node( const IKeyComparer<TKey>& comparer, Node<TKey, TData>* parent, TKey key, TData data )
 		: myKey( key ),
 		myData( data ),
-		less( __nullptr ),
-		greater( __nullptr ),
-		myComparer( comparer ),
-		myParent( parent )
+		less( nullptr ),
+		greater( nullptr ),
+		myParent( parent ),
+		myComparer( comparer )		
 	{
 	}
 
@@ -89,7 +97,7 @@ namespace PM {
 		}
 		else if( myComparer.IsGreater( key, myKey ) ) {
 			// Greater than our own key
-			if( greater == __nullptr ) {
+			if( greater == nullptr ) {
 				// No existing child
 				greater = new NodeType( myComparer, this, key, data );
 				if( greater ) {
@@ -102,7 +110,7 @@ namespace PM {
 		}
 		else {
 			// Less than our own key
-			if( less == __nullptr ) {
+			if( less == nullptr ) {
 				// No existing child
 				less = new NodeType( myComparer, this, key, data );
 				if( less ) {
@@ -122,10 +130,10 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	Node<TKey, TData>* Node<TKey, TData>::FindNode( TKey key )
+	Node<TKey, TData>* Node<TKey, TData>::FindNode( const TKey key )
 	{
 		// Assume no hit
-		NodeType* node = __nullptr;
+		NodeType* node = nullptr;
 
 		if( myComparer.AreEqual( key, myKey ) ) {
 			// We are it!
@@ -133,11 +141,11 @@ namespace PM {
 		}
 		else if( myComparer.IsLess( key, myKey ) ) {
 			// If we have a less node, try it
-			node = less != 0 ? less->FindNode( key ) : __nullptr;
+			node = less != 0 ? less->FindNode( key ) : nullptr;
 		}
 		else if( myComparer.IsGreater( key, myKey ) ) {
 			// If we have a greater node, try it.
-			node = greater != 0 ? greater->FindNode( key ) : __nullptr;
+			node = greater != 0 ? greater->FindNode( key ) : nullptr;
 		}
 
 		return node;
@@ -150,7 +158,7 @@ namespace PM {
 	template<typename TKey, typename TData>
 	int Node<TKey, TData>::CountChildren()
 	{
-		return (less == __nullptr ? 0 : 1) + (greater == nullptr ? 0 : 1);
+		return (less == nullptr ? 0 : 1) + (greater == 0 ? 0 : 1);
 	}
 
 	/////////////////////////////////////////////////////////////
@@ -158,11 +166,27 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	void Node<TKey, TData>::Clear()
+	Node<TKey, TData>* Node<TKey, TData>::Create( const IKeyComparer<TKey>& comparer, Node<TKey, TData>* parent, TKey k, TData d )
 	{
-		less = __nullptr;
-		greater = __nullptr;
-		myParent = __nullptr;
+		return new Node( comparer, parent, k, d );
+	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	void Node<TKey, TData>::DeleteSelf()
+	{
+		less = nullptr;
+		greater = nullptr;
+		myParent = nullptr;
+
+		// Assume that we have been allocated dynamically.
+		// When this class is extended to use a custom memory manager
+		// such as one that allocates a fixed array and uses in place new,
+		// that MM needs to be called here instead.
+		delete this;
 	}
 
 	/////////////////////////////////////////////////////////////
@@ -172,42 +196,50 @@ namespace PM {
 	template<typename TKey, typename TData>
 	Node<TKey, TData>* Node<TKey, TData>::Remove()
 	{
-		Node<TKey, TData>* replacementRoot = __nullptr;
+		// Three possible scenarios exists:
+		// 1. No children - simply remove it.
+		// 2. One child - remove it, letting the parent point to our child.
+		// 3. Two children - replace it with the node with next-to-greatest key. Find the left most child in the right tree.
+
+		Node<TKey, TData>* replacement = nullptr;
 
 		int count = CountChildren();
 
 		if( count == 0 ) {
 			if( myParent ) {
-				myParent->Skip( this, __nullptr );
+				// Remove us from our parent
+				myParent->Skip( this, nullptr );
 			}
 
-			Clear();
-			delete this;
+			DeleteSelf();
 		}
 		else if( count == 1 ) {
-			replacementRoot = less ? less : greater;
+			replacement = less ? less : greater;
 			
 			if( myParent ) {
-				myParent->Skip( this, replacementRoot );
+				// Tell our parent to skip us.
+				myParent->Skip( this, replacement );
 			}
 
-			Clear();
-			delete this;
+			DeleteSelf();
 		}
 		else { // count == 2
 			// Find next to largest key by following less-side of the right tree.
 			NodeType* nextToGreatest = greater;
-			while( nextToGreatest->less != __nullptr ) {
+			while( nextToGreatest->less != nullptr ) {
 				nextToGreatest = nextToGreatest->less;
 			}
 			
+			// Replace our key and data
 			ReplaceWith( nextToGreatest );
-
+			// Remove the node we took the key and data from
 			nextToGreatest->Remove();
-			replacementRoot = this;
+			// We are now the replacement
+			replacement = this;
 		}
 		
-		return replacementRoot;
+		// Return the replacement node, in practice only used when the root is removed.
+		return replacement;
 	}
 
 	/////////////////////////////////////////////////////////////
@@ -228,6 +260,7 @@ namespace PM {
 	template<typename TKey, typename TData>
 	void Node<TKey, TData>::Skip( NodeType* toSkip, NodeType* next )
 	{
+		// Skip the specified node, and use 'next' as the new node.
 		if( less == toSkip ) {
 			less = next;
 		}

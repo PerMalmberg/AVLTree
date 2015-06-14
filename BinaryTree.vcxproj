@@ -73,7 +73,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BinarySearchTree.h" />
-    <ClInclude Include="NodeComparer.h" />
+    <ClInclude Include="IKeyComparer.h" />
     <ClInclude Include="Node.h" />
   </ItemGroup>
   <ItemGroup>

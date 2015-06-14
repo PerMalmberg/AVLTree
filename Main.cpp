@@ -2,7 +2,7 @@
 
 using namespace PM;
 
-class IntComparer : public INodeComparer<int>
+class IntComparer : public IKeyComparer<int>
 {
 	virtual bool IsGreater( int lhs, int rhs ) const
 	{
@@ -44,7 +44,7 @@ void main( void )
 
 	int val;
 	bool res = bt.Find( 2, val );
-	bt.Delete( 32 );
+	bt.Delete( 50 );
 	bt.Delete( 70 );
 	bt.Delete( 50 );
 
