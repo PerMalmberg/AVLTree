@@ -15,7 +15,8 @@ namespace PM {
 		BinarySearchTree( const INodeComparer<TKey>& comparer );
 		virtual ~BinarySearchTree();
 		bool Add( TKey key, TData data );
-		bool Delete( TKey key );
+		bool Find( TKey key, TData& data );
+		void Delete( TKey key );
 
 		typedef Node<TKey, TData> NodeType;
 	private:
@@ -55,7 +56,7 @@ namespace PM {
 		bool res = false;
 		if( root == 0 ) {
 			// First node
-			root = new NodeType( myComparer, key, data );
+			root = new NodeType( myComparer, __nullptr, key, data );
 			if( root ) {
 				res = true;
 			}
@@ -75,7 +76,13 @@ namespace PM {
 	template<typename TKey, typename TData>
 	Node<TKey,TData>* BinarySearchTree<TKey, TData>::FindNode( TKey key )
 	{	
-		return root->Find( key );
+		NodeType* node = __nullptr;
+
+		if( root ) {
+			node = root->FindNode( key );
+		}
+
+		return node;
 	}
 
 	/////////////////////////////////////////////////////////////
@@ -83,8 +90,47 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	bool BinarySearchTree<TKey, TData>::Delete( TKey key )
-	{
+	bool BinarySearchTree<TKey, TData>::Find( TKey key, TData& data )
+	{		
+		bool res = false;
+		NodeType* node = FindNode( key );
 
+		if( node ) {
+			data = node->Get();
+			res = true;
+		}
+
+		return res;
+	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	void BinarySearchTree<TKey, TData>::Delete( TKey key )
+	{
+		// Three possible scenarios exists:
+		// 1. No children - simply remove it.
+		// 2. One child - remove it, letting the parent point to the child.
+		// 3. Two children - replace it with the node with next biggest key. Find the left most child in the right tree.
+		// If the node to remove is the root, we must update our root-pointer aswell.
+
+		// First, find the node to remove
+		NodeType* toRemove = FindNode( key );
+		if( toRemove ) {
+			// We have found a key to remove.
+
+			// Are we removing the root?
+			bool removingRoot = toRemove == root;
+			
+			// Get the replacement node 
+			NodeType* replacement = toRemove->Remove();
+
+			// Update the root, if it was deleted.
+			if( removingRoot ) {
+				root = replacement;
+			}
+		}
 	}
 }

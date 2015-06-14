@@ -27,11 +27,25 @@ void main( void )
 	IntComparer ic;
 	BinarySearchTree<int, int> bt( ic );
 
-	bt.Add( 5, 5 );
-	bt.Add( 4, 4 );
-	bt.Add( 9, 9 );
-	bt.Add( 2, 2 );
-	bt.Add( 8, 8 );
-	bt.Add( 7, 7 );
+	bt.Add( 50, 50 );
+	bt.Add( 30, 30 );
+	bt.Add( 20, 20 );
+	bt.Add( 40, 40 );
+	bt.Add( 32, 32 );
+	bt.Add( 34, 34 );
+	bt.Add( 36, 36 );
+	bt.Add( 70, 70 );
+	bt.Add( 60, 60 );
+	bt.Add( 65, 65 );
+	bt.Add( 80, 80 );
+	bt.Add( 75, 75 );
+	bt.Add( 85, 85 );
+
+
+	int val;
+	bool res = bt.Find( 2, val );
+	bt.Delete( 32 );
+	bt.Delete( 70 );
+	bt.Delete( 50 );
 
 }
