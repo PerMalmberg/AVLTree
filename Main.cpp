@@ -4,18 +4,19 @@ using namespace PM;
 
 class IntComparer : public IKeyComparer<int>
 {
+	// Shall return true if lhs > rhs
 	virtual bool IsGreater( int lhs, int rhs ) const
 	{
 		return lhs > rhs;
 	}
 
-	// Shall true if lhs < rhs
+	// Shall return true if lhs < rhs
 	virtual bool IsLess( int lhs, int rhs ) const
 	{
 		return lhs < rhs;
 	}
 
-	// Shall true if lhs == rhs
+	// Shall return true if lhs == rhs
 	virtual bool AreEqual( int lhs, int rhs ) const
 	{
 		return lhs == rhs;
