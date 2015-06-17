@@ -1,5 +1,6 @@
 #pragma once
 #include "IKeyComparer.h"
+#include <algorithm>
 
 namespace PM {
 
@@ -24,6 +25,7 @@ namespace PM {
 		Node<TKey, TData>* Remove();
 		// Counts the children of the node.
 		int GetChildCount();
+		int GetHeight();
 
 		// Static factory function, used together with the private constructor to force items to be created on the heap.
 		// Update this when a custom memory manager is used. Also see DeleteSelf().
@@ -32,6 +34,7 @@ namespace PM {
 
 		TKey myKey;
 		TData myData;
+		int height;
 		NodeType* less;
 		NodeType* greater;
 		NodeType* myParent;
@@ -41,6 +44,8 @@ namespace PM {
 		void ReplaceWith( Node<TKey, TData>* node );
 		void Skip( NodeType* toSkip, NodeType* next );
 		void DeleteSelf();
+		void CalculateOwnHeight();
+		void CalculateTreeHeight();
 
 		// Disable copying
 		Node<TKey, TData>( const NodeType& );
@@ -55,6 +60,7 @@ namespace PM {
 	Node<TKey, TData>::Node( const IKeyComparer<TKey>& comparer, Node<TKey, TData>* parent, TKey key, TData data )
 		: myKey( key ),
 		myData( data ),
+		height( 0 ),
 		less( nullptr ),
 		greater( nullptr ),
 		myParent( parent ),
@@ -118,11 +124,16 @@ namespace PM {
 			}
 			else {
 				// We do have a child, add pair to it.
-				(*selected)->Add( key, data );
+				res = (*selected)->Add( key, data );
 			}
 		}
 
-
+		if( res ) {
+			// We will calculate our height as we return from a successful add operation.
+			// We could also have called CalculateTreeHeight() on the newly added node to 
+			// achieve the same result.
+			CalculateOwnHeight();
+		}
 
 		return res;
 	}
@@ -160,7 +171,7 @@ namespace PM {
 	template<typename TKey, typename TData>
 	int Node<TKey, TData>::GetChildCount()
 	{
-		return (less == nullptr ? 0 : 1) + (greater == 0 ? 0 : 1);
+		return (less == nullptr ? 0 : 1) + (greater == nullptr ? 0 : 1);
 	}
 
 	/////////////////////////////////////////////////////////////
@@ -203,7 +214,7 @@ namespace PM {
 		// 2. One child - remove it, letting the parent point to our child.
 		// 3. Two children - replace it with the node with next-to-greatest key. Find the left most child in the right tree.
 
-		Node<TKey, TData>* replacement = nullptr;
+		NodeType* replacement = nullptr;
 
 		int count = GetChildCount();
 
@@ -212,6 +223,9 @@ namespace PM {
 				// Remove us from our parent
 				myParent->Skip( this, nullptr );
 			}
+
+			// Calculate new height starting at our parent
+			myParent->CalculateTreeHeight();
 
 			DeleteSelf();
 		}
@@ -222,6 +236,9 @@ namespace PM {
 				// Tell our parent to skip us.
 				myParent->Skip( this, replacement );
 			}
+
+			// Calculate new height starting with the replacement node
+			replacement->CalculateTreeHeight();
 
 			DeleteSelf();
 		}
@@ -234,8 +251,10 @@ namespace PM {
 			
 			// Replace our key and data
 			ReplaceWith( nextToGreatest );
-			// Remove the node we took the key and data from
+			// Remove the node we took the key and data from.
+			// The operation will also recalculate the height.
 			nextToGreatest->Remove();
+
 			// We are now the replacement
 			replacement = this;
 		}
@@ -268,6 +287,50 @@ namespace PM {
 		}
 		else if( greater == toSkip ) {
 			greater = next;
+		}
+	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	int Node<TKey, TData>::GetHeight()
+	{
+		return height;
+	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	void Node<TKey, TData>::CalculateOwnHeight()
+	{
+		if( GetChildCount() == 0 ) {
+			height = 0;
+		}
+		else {
+			int lessHeight = less ? less->GetHeight() : -1;
+			int greaterHeight = greater ? greater->GetHeight() : -1;
+			height = std::max<int>( lessHeight, greaterHeight ) + 1;
+		}
+	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	void Node<TKey, TData>::CalculateTreeHeight()
+	{
+		CalculateOwnHeight();
+
+		// Calculate the height of all the nodes above us.
+		NodeType* curr = myParent;
+		while( curr != nullptr ) {
+			curr->CalculateOwnHeight();
+			curr = curr->myParent;
 		}
 	}
 }

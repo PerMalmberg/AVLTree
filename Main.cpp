@@ -45,6 +45,7 @@ void main( void )
 
 	int val;
 	bool res = bt.Find( 2, val );
+	bt.Delete( 36 );
 	bt.Delete( 50 );
 	bt.Delete( 70 );
 	bt.Delete( 50 );
