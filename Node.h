@@ -23,7 +23,7 @@ namespace PM {
 		// Removes the node
 		Node<TKey, TData>* Remove();
 		// Counts the children of the node.
-		int CountChildren();
+		int GetChildCount();
 
 		// Static factory function, used together with the private constructor to force items to be created on the heap.
 		// Update this when a custom memory manager is used. Also see DeleteSelf().
@@ -91,36 +91,38 @@ namespace PM {
 	{
 		bool res;
 
+		// Get a pointer to the pointer we need to go via.
+		NodeType** selected = nullptr;
+
 		if( myComparer.AreEqual( key, myKey ) ) {
 			// Can't add same key
 			res = false;
 		}
 		else if( myComparer.IsGreater( key, myKey ) ) {
 			// Greater than our own key
-			if( greater == nullptr ) {
-				// No existing child
-				greater = new NodeType( myComparer, this, key, data );
-				if( greater ) {
-					res = true;
-				}
-			}
-			else {
-				res = greater->Add( key, data );
-			}
+			selected = &greater;
 		}
 		else {
 			// Less than our own key
-			if( less == nullptr ) {
+			selected = &less;
+		}
+
+		if( selected ) {
+			// Do we have a child at that leg?
+			if( *selected == nullptr ) {
 				// No existing child
-				less = new NodeType( myComparer, this, key, data );
-				if( less ) {
+				*selected = new NodeType( myComparer, this, key, data );
+				if( *selected ) {
 					res = true;
 				}
 			}
 			else {
-				res = less->Add( key, data );
+				// We do have a child, add pair to it.
+				(*selected)->Add( key, data );
 			}
 		}
+
+
 
 		return res;
 	}
@@ -156,7 +158,7 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	int Node<TKey, TData>::CountChildren()
+	int Node<TKey, TData>::GetChildCount()
 	{
 		return (less == nullptr ? 0 : 1) + (greater == 0 ? 0 : 1);
 	}
@@ -203,7 +205,7 @@ namespace PM {
 
 		Node<TKey, TData>* replacement = nullptr;
 
-		int count = CountChildren();
+		int count = GetChildCount();
 
 		if( count == 0 ) {
 			if( myParent ) {
