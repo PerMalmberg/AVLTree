@@ -35,6 +35,7 @@ namespace PM {
 		TKey myKey;
 		TData myData;
 		int height;
+		int balance;
 		NodeType* less;
 		NodeType* greater;
 		NodeType* myParent;
@@ -44,8 +45,8 @@ namespace PM {
 		void ReplaceWith( Node<TKey, TData>* node );
 		void Skip( NodeType* toSkip, NodeType* next );
 		void DeleteSelf();
-		void CalculateOwnHeight();
-		void CalculateTreeHeight();
+		void CalculateOwnProperties();
+		void CalculateTreeProperties();
 
 		// Disable copying
 		Node<TKey, TData>( const NodeType& );
@@ -61,6 +62,7 @@ namespace PM {
 		: myKey( key ),
 		myData( data ),
 		height( 0 ),
+		balance( 0 ),
 		less( nullptr ),
 		greater( nullptr ),
 		myParent( parent ),
@@ -130,9 +132,9 @@ namespace PM {
 
 		if( res ) {
 			// We will calculate our height as we return from a successful add operation.
-			// We could also have called CalculateTreeHeight() on the newly added node to 
+			// We could also have called CalculateTreeProperties() on the newly added node to 
 			// achieve the same result.
-			CalculateOwnHeight();
+			CalculateOwnProperties();
 		}
 
 		return res;
@@ -224,8 +226,8 @@ namespace PM {
 				myParent->Skip( this, nullptr );
 			}
 
-			// Calculate new height starting at our parent
-			myParent->CalculateTreeHeight();
+			// Calculate new properties starting at our parent
+			myParent->CalculateTreeProperties();
 
 			DeleteSelf();
 		}
@@ -237,8 +239,8 @@ namespace PM {
 				myParent->Skip( this, replacement );
 			}
 
-			// Calculate new height starting with our parent.
-			myParent->CalculateTreeHeight();
+			// Calculate new properties starting with our parent.
+			myParent->CalculateTreeProperties();
 
 			DeleteSelf();
 		}
@@ -305,15 +307,17 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	void Node<TKey, TData>::CalculateOwnHeight()
+	void Node<TKey, TData>::CalculateOwnProperties()
 	{
 		if( GetChildCount() == 0 ) {
 			height = 0;
+			balance = 0;
 		}
 		else {
 			int lessHeight = less ? less->GetHeight() : -1;
 			int greaterHeight = greater ? greater->GetHeight() : -1;
 			height = std::max<int>( lessHeight, greaterHeight ) + 1;
+			balance = lessHeight - greaterHeight;
 		}
 	}
 
@@ -322,14 +326,14 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	void Node<TKey, TData>::CalculateTreeHeight()
+	void Node<TKey, TData>::CalculateTreeProperties()
 	{
-		CalculateOwnHeight();
+		CalculateOwnProperties();
 
 		// Calculate the height of all the nodes above us.
 		NodeType* curr = myParent;
 		while( curr != nullptr ) {
-			curr->CalculateOwnHeight();
+			curr->CalculateOwnProperties();
 			curr = curr->myParent;
 		}
 	}
