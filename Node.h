@@ -237,8 +237,8 @@ namespace PM {
 				myParent->Skip( this, replacement );
 			}
 
-			// Calculate new height starting with the replacement node
-			replacement->CalculateTreeHeight();
+			// Calculate new height starting with our parent.
+			myParent->CalculateTreeHeight();
 
 			DeleteSelf();
 		}
