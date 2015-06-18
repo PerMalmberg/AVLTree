@@ -47,6 +47,7 @@ namespace PM {
 		void DeleteSelf();
 		void CalculateOwnProperties();
 		void CalculateTreeProperties();
+		void RotateLeft( NodeType* rotationNode );
 
 		// Disable copying
 		Node<TKey, TData>( const NodeType& );
@@ -224,10 +225,9 @@ namespace PM {
 			if( myParent ) {
 				// Remove us from our parent
 				myParent->Skip( this, nullptr );
-			}
-
-			// Calculate new properties starting at our parent
-			myParent->CalculateTreeProperties();
+				// Calculate new properties starting at our parent
+				myParent->CalculateTreeProperties();
+			}			
 
 			DeleteSelf();
 		}
@@ -237,11 +237,10 @@ namespace PM {
 			if( myParent ) {
 				// Tell our parent to skip us.
 				myParent->Skip( this, replacement );
+				// Calculate new properties starting with our parent.
+				myParent->CalculateTreeProperties();
 			}
-
-			// Calculate new properties starting with our parent.
-			myParent->CalculateTreeProperties();
-
+						
 			DeleteSelf();
 		}
 		else { // count == 2
@@ -336,5 +335,19 @@ namespace PM {
 			curr->CalculateOwnProperties();
 			curr = curr->myParent;
 		}
+	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	void Node<TKey, TData>::RotateLeft( NodeType* rotationNode )
+	{
+		// Perform a left-rotation around the provided node.
+		NodeType* root = rotationNode->myParent;
+
+
+
 	}
 }
