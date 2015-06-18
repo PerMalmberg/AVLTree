@@ -28,10 +28,10 @@ void main( void )
 	IntComparer ic;
 	BinarySearchTree<int, int> bt( ic );
 
-	bt.Add( 3, 20 );
-	
-	bt.Add( 4, 10 );
 	bt.Add( 5, 30 );
+	bt.Add( 3, 20 );	
+	bt.Add( 4, 10 );
+	
 	
 	
 	/*

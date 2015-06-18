@@ -46,11 +46,16 @@ namespace PM {
 		void Skip( NodeType* toSkip, NodeType* next );
 		void DeleteSelf();
 		void CalculateOwnProperties();
-		void CalculateTreeProperties();
+		void Retrace();
 		bool LeansLeft();
 		bool LeansRight();
 		bool IsLeftHeavy();
 		bool IsRightHeavy();
+		void DisconnectFromParent();
+		void ConnectToLess( NodeType* node );
+		void ConnectToGreater( NodeType* node );
+
+		Node<TKey, TData>& RotateRight();
 
 		// Disable copying
 		Node<TKey, TData>( const NodeType& );
@@ -227,7 +232,7 @@ namespace PM {
 				// Remove us from our parent
 				myParent->Skip( this, nullptr );
 				// Calculate new properties starting at our parent
-				myParent->CalculateTreeProperties();
+				myParent->Retrace();
 			}			
 
 			DeleteSelf();
@@ -239,7 +244,7 @@ namespace PM {
 				// Tell our parent to skip us.
 				myParent->Skip( this, replacement );
 				// Calculate new properties starting with our parent.
-				myParent->CalculateTreeProperties();
+				myParent->Retrace();
 			}
 						
 			DeleteSelf();
@@ -330,7 +335,7 @@ namespace PM {
 		if( LeansLeft() ) {
 			if( less->IsRightHeavy() ) {
 				// Left-Right case
-				int i = 0;
+				RotateRight().Retrace();
 			}
 			else if( less->IsLeftHeavy() ) {
 				// Left-Left case
@@ -354,7 +359,7 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	void Node<TKey, TData>::CalculateTreeProperties()
+	void Node<TKey, TData>::Retrace()
 	{
 		CalculateOwnProperties();
 
@@ -405,4 +410,74 @@ namespace PM {
 	{
 		return balance < 0;
 	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	void Node<TKey, TData>::DisconnectFromParent()
+	{
+		if( myParent ) {
+			myParent->Skip( this, nullptr );
+			myParent = nullptr;
+		}
+	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	void Node<TKey, TData>::ConnectToLess( NodeType* node )
+	{
+		if( node ) {
+			less = node;
+			node->myParent = this;
+		}
+	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	void Node<TKey, TData>::ConnectToGreater( NodeType* node )
+	{
+		if( node ) {
+			greater = node;
+			node->myParent = this;
+		}
+	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	Node<TKey,TData>& Node<TKey, TData>::RotateRight()
+	{
+		NodeType* a = less;
+		NodeType* b = less->greater;
+
+		// Disconnect nodes from parents
+		a->DisconnectFromParent();
+		b->DisconnectFromParent();
+
+		// Move child to other node
+		NodeType* bLess = b->less;
+		if( bLess ) {
+			bLess->DisconnectFromParent();
+			a->ConnectToGreater( bLess );
+		}
+
+		// Reconnect nodes to parents
+		ConnectToLess( b );
+		b->ConnectToLess( a );
+		
+		// Return new less-less node.
+		return *a;
+	}
+
+	// https://en.wikipedia.org/wiki/AVL_tree
 }
