@@ -47,7 +47,10 @@ namespace PM {
 		void DeleteSelf();
 		void CalculateOwnProperties();
 		void CalculateTreeProperties();
-		void RotateLeft( NodeType* rotationNode );
+		bool LeansLeft();
+		bool LeansRight();
+		bool IsLeftHeavy();
+		bool IsRightHeavy();
 
 		// Disable copying
 		Node<TKey, TData>( const NodeType& );
@@ -132,9 +135,7 @@ namespace PM {
 		}
 
 		if( res ) {
-			// We will calculate our height as we return from a successful add operation.
-			// We could also have called CalculateTreeProperties() on the newly added node to 
-			// achieve the same result.
+			// We will calculate our properties as we return from a successful add operation.
 			CalculateOwnProperties();
 		}
 
@@ -308,15 +309,43 @@ namespace PM {
 	template<typename TKey, typename TData>
 	void Node<TKey, TData>::CalculateOwnProperties()
 	{
+		int lessHeight = less ? less->GetHeight() : -1;
+		int greaterHeight = greater ? greater->GetHeight() : -1;
+
+		// A balanced node has a balance of 0.
+		// A node with higher less tree has a positive balance,
+		// A node with higher greater tree has a negative balance.
+		balance = lessHeight - greaterHeight;
+		
+		// A node with zero children has a height of 0
 		if( GetChildCount() == 0 ) {
 			height = 0;
-			balance = 0;
 		}
 		else {
-			int lessHeight = less ? less->GetHeight() : -1;
-			int greaterHeight = greater ? greater->GetHeight() : -1;
+			// A node with one or two childs has a height one larger than its highest child.
 			height = std::max<int>( lessHeight, greaterHeight ) + 1;
-			balance = lessHeight - greaterHeight;
+		}
+
+		// If a node has a balance outside range [-1,1], it needs to be balanced.
+		if( LeansLeft() ) {
+			if( less->IsRightHeavy() ) {
+				// Left-Right case
+				int i = 0;
+			}
+			else if( less->IsLeftHeavy() ) {
+				// Left-Left case
+				int i = 0;
+			}
+		}
+		else if( LeansRight() ) {
+			if( greater->IsLeftHeavy() ) {
+				// Right-Left case
+				int i = 0;
+			}
+			else if( greater->IsRightHeavy() ) {
+				// Right-Right case
+				int i = 0;
+			}
 		}
 	}
 
@@ -342,12 +371,38 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	void Node<TKey, TData>::RotateLeft( NodeType* rotationNode )
+	bool Node<TKey, TData>::LeansLeft()
 	{
-		// Perform a left-rotation around the provided node.
-		NodeType* root = rotationNode->myParent;
+		return balance > 1;
+	}
 
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	bool Node<TKey, TData>::LeansRight()
+	{
+		return balance < -1;
+	}
 
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	bool Node<TKey, TData>::IsLeftHeavy()
+	{
+		return balance > 0;
+	}
 
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	bool Node<TKey, TData>::IsRightHeavy()
+	{
+		return balance < 0;
 	}
 }
