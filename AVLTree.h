@@ -1,22 +1,22 @@
 #pragma once
 #include "Node.h"
 #include "IKeyComparer.h"
-#include <iostream>
+#include "AVLPrinter.h"
 
 namespace PM {
-
+	
 	/////////////////////////////////////////////////////////////
 	//
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	class BinarySearchTree
+	class AVLTree
 	{
 	public:
 		// Creates the BTS. The provided comparer is used to determine
 		// relation ship between the keys.
-		BinarySearchTree( const IKeyComparer<TKey>& comparer );
-		virtual ~BinarySearchTree();
+		AVLTree( const IKeyComparer<TKey>& comparer );
+		virtual ~AVLTree();
 
 		// Adds the data based on the provided key
 		bool Add( TKey key, TData data );
@@ -28,20 +28,20 @@ namespace PM {
 		// Delets a key from the tree
 		void Delete( TKey key );
 
-		void PrintInOrder();
+		void PrintInOrder( const AVLPrinter<TData>& printer );
 	private:
 		typedef Node<TKey, TData> NodeType;
 		const IKeyComparer<TKey>& myComparer;
 		NodeType* root;
 		NodeType* FindNode( TKey key );
 	};
-
+	
 	/////////////////////////////////////////////////////////////
 	//
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	BinarySearchTree<TKey,TData>::BinarySearchTree( const IKeyComparer<TKey>& comparer )
+	AVLTree<TKey,TData>::AVLTree( const IKeyComparer<TKey>& comparer )
 		: myComparer( comparer ), root( 0 )
 	{
 
@@ -52,7 +52,7 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	BinarySearchTree<TKey,TData>::~BinarySearchTree()
+	AVLTree<TKey,TData>::~AVLTree()
 	{
 		delete root;
 	}
@@ -62,7 +62,7 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	bool BinarySearchTree<TKey,TData>::Add( TKey key, TData data )
+	bool AVLTree<TKey,TData>::Add( TKey key, TData data )
 	{
 		bool res = false;
 		if( root == 0 ) {
@@ -85,7 +85,7 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	Node<TKey,TData>* BinarySearchTree<TKey, TData>::FindNode( TKey key )
+	Node<TKey,TData>* AVLTree<TKey, TData>::FindNode( TKey key )
 	{	
 		NodeType* node = nullptr;
 
@@ -101,7 +101,7 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	bool BinarySearchTree<TKey, TData>::Find( TKey key, TData& data )
+	bool AVLTree<TKey, TData>::Find( TKey key, TData& data )
 	{		
 		bool res = false;
 		NodeType* node = FindNode( key );
@@ -119,7 +119,7 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	void BinarySearchTree<TKey, TData>::Delete( TKey key )
+	void AVLTree<TKey, TData>::Delete( TKey key )
 	{
 		// First, find the node to remove
 		NodeType* toRemove = FindNode( key );
@@ -144,10 +144,10 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	void BinarySearchTree<TKey, TData>::PrintInOrder()
+	void AVLTree<TKey, TData>::PrintInOrder( const AVLPrinter<TData>& printer )
 	{
 		if( root ) {
-			root->PrintInOrder();
+			root->PrintInOrder( printer );
 		}
 	}
 }

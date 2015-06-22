@@ -1,4 +1,5 @@
-#include "BinarySearchTree.h"
+#include "AVLTree.h"
+#include <iostream>
 
 using namespace PM;
 
@@ -44,27 +45,30 @@ class CharComparer : public IKeyComparer<char>
 	}
 };
 
+class CharPrinter : public AVLPrinter<char>
+{
+public:
+	void Print( char c ) const {
+		std::cout << c << " ";
+	}
+};
+
 void main( void )
 {
+	// Test cases:
+	//http://stackoverflow.com/questions/3955680/how-to-check-if-my-avl-tree-implementation-is-correct/24064555#24064555
+
 	CharComparer cc;
-	BinarySearchTree<char, char> bt( cc );
+	AVLTree<char, char> avl( cc );
 
 	const char* input = "hckbeiladfg";
 
-	for( int i = 0; i < strlen( input ); ++i ) {
-		bt.Add( input[i], input[i] );
+	for( size_t i = 0; i < strlen( input ); ++i ) {
+		avl.Add( input[i], input[i] );
 	}
 	
-	bt.Delete( 'a' );
+	avl.Delete( 'a' );
 	
-	/*
-	int val;
-	bool res = bt.Find( 2, val );
-	bt.Delete( 36 );
-	bt.Delete( 50 );
-	bt.Delete( 70 );
-	bt.Delete( 50 );
-	*/
 
-	bt.PrintInOrder();
+	avl.PrintInOrder( CharPrinter() );
 }

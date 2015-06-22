@@ -15,7 +15,7 @@
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <Keyword>ManagedCProj</Keyword>
     <RootNamespace>BinaryTree</RootNamespace>
-    <ProjectName>BinarySearchTree</ProjectName>
+    <ProjectName>AVLTree</ProjectName>
     <TargetPlatformVersion>8.1</TargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -73,7 +73,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="BinarySearchTree.h" />
+    <ClInclude Include="AVLPrinter.h" />
+    <ClInclude Include="AVLTree.h" />
     <ClInclude Include="IKeyComparer.h" />
     <ClInclude Include="Node.h" />
   </ItemGroup>
