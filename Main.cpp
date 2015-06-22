@@ -23,16 +23,39 @@ class IntComparer : public IKeyComparer<int>
 	}
 };
 
+class CharComparer : public IKeyComparer<char>
+{
+	// Shall return true if lhs > rhs
+	virtual bool IsGreater( char lhs, char rhs ) const
+	{
+		return lhs > rhs;
+	}
+
+	// Shall return true if lhs < rhs
+	virtual bool IsLess( char lhs, char rhs ) const
+	{
+		return lhs < rhs;
+	}
+
+	// Shall return true if lhs == rhs
+	virtual bool AreEqual( char lhs, char rhs ) const
+	{
+		return lhs == rhs;
+	}
+};
+
 void main( void )
 {
-	IntComparer ic;
-	BinarySearchTree<int, int> bt( ic );
+	CharComparer cc;
+	BinarySearchTree<char, char> bt( cc );
 
-	bt.Add( 5, 30 );
-	bt.Add( 3, 20 );	
-	bt.Add( 4, 10 );
+	const char* input = "hckbeiladfg";
+
+	for( int i = 0; i < strlen( input ); ++i ) {
+		bt.Add( input[i], input[i] );
+	}
 	
-	
+	bt.Delete( 'a' );
 	
 	/*
 	int val;
@@ -42,4 +65,6 @@ void main( void )
 	bt.Delete( 70 );
 	bt.Delete( 50 );
 	*/
+
+	bt.PrintInOrder();
 }

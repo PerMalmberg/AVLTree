@@ -1,6 +1,7 @@
 #pragma once
 #include "Node.h"
 #include "IKeyComparer.h"
+#include <iostream>
 
 namespace PM {
 
@@ -26,6 +27,8 @@ namespace PM {
 
 		// Delets a key from the tree
 		void Delete( TKey key );
+
+		void PrintInOrder();
 	private:
 		typedef Node<TKey, TData> NodeType;
 		const IKeyComparer<TKey>& myComparer;
@@ -133,6 +136,18 @@ namespace PM {
 			if( removingRoot ) {
 				root = replacement;
 			}
+		}
+	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	void BinarySearchTree<TKey, TData>::PrintInOrder()
+	{
+		if( root ) {
+			root->PrintInOrder();
 		}
 	}
 }

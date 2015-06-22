@@ -1,6 +1,7 @@
 #pragma once
 #include "IKeyComparer.h"
 #include <algorithm>
+#include <iostream>
 
 namespace PM {
 
@@ -26,6 +27,7 @@ namespace PM {
 		// Counts the children of the node.
 		int GetChildCount();
 		int GetHeight();
+		void PrintInOrder();
 
 		// Static factory function, used together with the private constructor to force items to be created on the heap.
 		// Update this when a custom memory manager is used. Also see DeleteSelf().
@@ -39,10 +41,11 @@ namespace PM {
 		NodeType* less;
 		NodeType* greater;
 		NodeType* myParent;
-		const IKeyComparer<TKey>& myComparer;		
+		const IKeyComparer<TKey>& myComparer;
 
 		Node( const IKeyComparer<TKey>& comparer, Node<TKey, TData>* parent, TKey k, TData d );
-		void ReplaceWith( Node<TKey, TData>* node );
+		void CopyFrom( Node<TKey, TData>& node );
+		void Swap( Node<TKey, TData>& lhs, Node<TKey, TData>& rhs );
 		void Skip( NodeType* toSkip, NodeType* next );
 		void DeleteSelf();
 		void CalculateOwnProperties();
@@ -55,7 +58,7 @@ namespace PM {
 		void ConnectToLess( NodeType* node );
 		void ConnectToGreater( NodeType* node );
 
-		Node<TKey, TData>& RotateRight();
+		Node<TKey, TData>& Rotate( NodeType* upper, NodeType* lower );
 
 		// Disable copying
 		Node<TKey, TData>( const NodeType& );
@@ -75,7 +78,7 @@ namespace PM {
 		less( nullptr ),
 		greater( nullptr ),
 		myParent( parent ),
-		myComparer( comparer )		
+		myComparer( comparer )
 	{
 	}
 
@@ -233,20 +236,20 @@ namespace PM {
 				myParent->Skip( this, nullptr );
 				// Calculate new properties starting at our parent
 				myParent->Retrace();
-			}			
+			}
 
 			DeleteSelf();
 		}
 		else if( count == 1 ) {
 			replacement = less ? less : greater;
-			
+
 			if( myParent ) {
 				// Tell our parent to skip us.
 				myParent->Skip( this, replacement );
 				// Calculate new properties starting with our parent.
 				myParent->Retrace();
 			}
-						
+
 			DeleteSelf();
 		}
 		else { // count == 2
@@ -255,9 +258,9 @@ namespace PM {
 			while( nextToGreatest->less != nullptr ) {
 				nextToGreatest = nextToGreatest->less;
 			}
-			
+
 			// Replace our key and data
-			ReplaceWith( nextToGreatest );
+			CopyFrom( *nextToGreatest );
 			// Remove the node we took the key and data from.
 			// The operation will also recalculate the height.
 			nextToGreatest->Remove();
@@ -265,7 +268,7 @@ namespace PM {
 			// We are now the replacement
 			replacement = this;
 		}
-		
+
 		// Return the replacement node, in practice only used when the root is removed.
 		return replacement;
 	}
@@ -275,11 +278,26 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	void Node<TKey, TData>::ReplaceWith( Node<TKey, TData>* node )
+	void Node<TKey, TData>::CopyFrom( Node<TKey, TData>& node )
 	{
-		myKey = node->myKey;
-		myData = node->myData;
+		myKey = node.myKey;
+		myData = node.myData;
 	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	void Node<TKey, TData>::Swap( Node<TKey, TData>& lhs, Node<TKey, TData>& rhs )
+	{
+		TKey key = rhs.myKey;
+		TData data = rhs.myData;
+		rhs.CopyFrom( lhs );
+		lhs.myKey = key;
+		lhs.myData = data;
+	}
+
 
 	/////////////////////////////////////////////////////////////
 	//
@@ -321,7 +339,7 @@ namespace PM {
 		// A node with higher less tree has a positive balance,
 		// A node with higher greater tree has a negative balance.
 		balance = lessHeight - greaterHeight;
-		
+
 		// A node with zero children has a height of 0
 		if( GetChildCount() == 0 ) {
 			height = 0;
@@ -335,21 +353,22 @@ namespace PM {
 		if( LeansLeft() ) {
 			if( less->IsRightHeavy() ) {
 				// Left-Right case
-				RotateRight().Retrace();
+				Rotate( less, less->greater ).Retrace();
+
 			}
 			else if( less->IsLeftHeavy() ) {
 				// Left-Left case
-				int i = 0;
+				Rotate( this, less ).Retrace();
 			}
 		}
 		else if( LeansRight() ) {
 			if( greater->IsLeftHeavy() ) {
 				// Right-Left case
-				int i = 0;
+				Rotate( greater, greater->less ).Retrace();
 			}
 			else if( greater->IsRightHeavy() ) {
 				// Right-Right case
-				int i = 0;
+				Rotate( this, greater ).Retrace();
 			}
 		}
 	}
@@ -431,9 +450,9 @@ namespace PM {
 	template<typename TKey, typename TData>
 	void Node<TKey, TData>::ConnectToLess( NodeType* node )
 	{
-		if( node ) {
-			less = node;
-			node->myParent = this;
+		less = node;
+		if( less ) {
+			less->myParent = this;
 		}
 	}
 
@@ -444,9 +463,9 @@ namespace PM {
 	template<typename TKey, typename TData>
 	void Node<TKey, TData>::ConnectToGreater( NodeType* node )
 	{
-		if( node ) {
-			greater = node;
-			node->myParent = this;
+		greater = node;
+		if( greater ) {
+			greater->myParent = this;
 		}
 	}
 
@@ -455,29 +474,74 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	Node<TKey,TData>& Node<TKey, TData>::RotateRight()
+	Node<TKey, TData>& Node<TKey, TData>::Rotate( NodeType* upper, NodeType* lower )
 	{
-		NodeType* a = less;
-		NodeType* b = less->greater;
+		// Good illustration of rotation: https://en.wikipedia.org/wiki/AVL_tree#/media/File:BinaryTreeRotations.svg
 
-		// Disconnect nodes from parents
-		a->DisconnectFromParent();
-		b->DisconnectFromParent();
+		// Rotate around the upper node.
+		// Rotating left or right?
+		bool leftRotation = upper->greater == lower;
 
-		// Move child to other node
-		NodeType* bLess = b->less;
-		if( bLess ) {
-			bLess->DisconnectFromParent();
-			a->ConnectToGreater( bLess );
+		// The child nodes of the nodes being rotated
+		NodeType* alpha, *beta, *gamma;
+
+		if( leftRotation ) {
+			alpha = upper->less;
+			beta = lower->less;
+			gamma = lower->greater;
+		}
+		else {
+			alpha = lower->less;
+			beta = lower->greater;
+			gamma = upper->greater;
 		}
 
-		// Reconnect nodes to parents
-		ConnectToLess( b );
-		b->ConnectToLess( a );
-		
-		// Return new less-less node.
-		return *a;
+		// Disconnect only lower rotation node
+		lower->DisconnectFromParent();
+		// Disconnect children
+		if( alpha ) { alpha->DisconnectFromParent(); }
+		if( beta ) { beta->DisconnectFromParent(); }
+		if( gamma ) { gamma->DisconnectFromParent(); }
+
+		// We don't want to involve the parent of the upper node so we copy key
+		// and data between the nodes that are beeing rotated.
+		Swap( *upper, *lower );
+
+		if( leftRotation ) {
+			upper->ConnectToLess( lower );
+			upper->ConnectToGreater( gamma );
+			lower->ConnectToLess( alpha );
+			lower->ConnectToGreater( beta );
+		}
+		else {
+			// Rotate right
+			upper->ConnectToLess( alpha );
+			upper->ConnectToGreater( lower );
+			lower->ConnectToLess( beta );
+			lower->ConnectToGreater( gamma );
+		}
+
+		// Return lower node
+		return *lower;
 	}
 
 	// https://en.wikipedia.org/wiki/AVL_tree
+
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	void Node<TKey, TData>::PrintInOrder()
+	{
+		if( less ) {
+			less->PrintInOrder();
+		}
+		
+		std::cout << Get() << " ";
+		if( greater ) {
+			greater->PrintInOrder();
+		}
+	}
 }
