@@ -73,7 +73,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AVLPrinter.h" />
+    <ClInclude Include="ITraverseCallback.h" />
     <ClInclude Include="AVLTree.h" />
     <ClInclude Include="IKeyComparer.h" />
     <ClInclude Include="Node.h" />

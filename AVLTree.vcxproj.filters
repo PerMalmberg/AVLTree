@@ -24,7 +24,7 @@
     <ClInclude Include="AVLTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AVLPrinter.h">
+    <ClInclude Include="ITraverseCallback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

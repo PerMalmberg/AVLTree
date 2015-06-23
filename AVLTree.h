@@ -1,7 +1,7 @@
 #pragma once
 #include "Node.h"
 #include "IKeyComparer.h"
-#include "AVLPrinter.h"
+#include "ITraverseCallback.h"
 
 namespace PM {
 	
@@ -28,7 +28,11 @@ namespace PM {
 		// Delets a key from the tree
 		void Delete( TKey key );
 
-		void PrintInOrder( const AVLPrinter<TData>& printer );
+		// Clears the entire tree
+		void Clear();
+
+		void TraverseInOrder( ITraverseCallback<TData>& printer );
+		
 	private:
 		typedef Node<TKey, TData> NodeType;
 		const IKeyComparer<TKey>& myComparer;
@@ -144,10 +148,21 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	void AVLTree<TKey, TData>::PrintInOrder( const AVLPrinter<TData>& printer )
+	void AVLTree<TKey, TData>::Clear()
+	{
+		delete root;
+		root = nullptr;
+	}
+
+	/////////////////////////////////////////////////////////////
+	//
+	//
+	/////////////////////////////////////////////////////////////
+	template<typename TKey, typename TData>
+	void AVLTree<TKey, TData>::TraverseInOrder( ITraverseCallback<TData>& printer )
 	{
 		if( root ) {
-			root->PrintInOrder( printer );
+			root->TraverseInOrder( printer );
 		}
 	}
 }

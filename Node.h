@@ -1,6 +1,6 @@
 #pragma once
 #include "IKeyComparer.h"
-#include "AVLPrinter.h"
+#include "ITraverseCallback.h"
 #include <algorithm>
 
 namespace PM {
@@ -27,7 +27,7 @@ namespace PM {
 		// Counts the children of the node.
 		int GetChildCount();
 		int GetHeight();
-		void PrintInOrder( const AVLPrinter<TData>& );
+		void TraverseInOrder( ITraverseCallback<TData>& );
 
 		// Static factory function, used together with the private constructor to force items to be created on the heap.
 		// Update this when a custom memory manager is used. Also see DeleteSelf().
@@ -533,16 +533,16 @@ namespace PM {
 	//
 	/////////////////////////////////////////////////////////////
 	template<typename TKey, typename TData>
-	void Node<TKey, TData>::PrintInOrder( const AVLPrinter<TData>& printer )
+	void Node<TKey, TData>::TraverseInOrder( ITraverseCallback<TData>& printer )
 	{
 		if( less ) {
-			less->PrintInOrder( printer );
+			less->TraverseInOrder( printer );
 		}
 		
-		printer.Print( Get() );
+		printer.Traversed( Get() );
 
 		if( greater ) {
-			greater->PrintInOrder( printer );
+			greater->TraverseInOrder( printer );
 		}
 	}
 }
