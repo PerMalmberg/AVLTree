@@ -109,14 +109,13 @@ namespace PM {
 	template<typename TKey, typename TData>
 	bool Node<TKey, TData>::Add( TKey key, TData data )
 	{
-		bool res;
+		bool res = false;
 
 		// Get a pointer to the pointer we need to go via.
 		NodeType** selected = nullptr;
 
 		if( myComparer.AreEqual( key, myKey ) ) {
 			// Can't add same key
-			res = false;
 		}
 		else if( myComparer.IsGreater( key, myKey ) ) {
 			// Greater than our own key
