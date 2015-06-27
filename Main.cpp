@@ -106,6 +106,11 @@ void Test( const TKey* input, AVLTree<TKey,TData>& tree, const TKey* deleteKey )
 	std::cout << (iv.IsOk() ? "OK" : "FAIL") << std::endl;
 }
 
+void Test( bool result, bool expected )
+{
+	std::cout << (result == expected ? "OK" : "FAIL") << std::endl;
+}
+
 void main( void )
 {
 	// Test cases:
@@ -113,8 +118,6 @@ void main( void )
 
 	CharComparer cc;
 	AVLTree<char, char> avl( cc );
-
-	Test<char, char>( "abc", avl, nullptr );
 	Test<char, char>( "cba", avl, nullptr );
 	Test<char, char>( "acb", avl, nullptr );
 	Test<char, char>( "cab", avl, nullptr );
@@ -132,5 +135,26 @@ void main( void )
 	Test<char, char>( "hckbeiladfjg", avl, "j" );
 	Test<char, char>( "hckbeiladfg", avl, nullptr );
 
+
+	Test<char, char>( "abc", avl, nullptr );
+	Test( avl.Add( 'a', 'a' ), false );
+	Test( avl.Add( 'b', 'c' ), false );
+	Test( avl.Add( 'c', 'c' ), false );
+	Test( avl.Add( 'd', 'd' ), true );
+	Test( avl.Add( 'e', 'e' ), true );
+	char out;
+	Test( avl.Find( 'e', out ), true );
+	Test( avl.Find( 'a', out ), true );
+	Test( avl.Find( 'b', out ), true );
+	Test( avl.Find( 'c', out ), true );
+	Test( avl.Find( 'd', out ), true );
+	Test( avl.Find( 'f', out ), false );
+
+	Test<char, char>( "abcdefghijklmnopqrstuvwxyz", avl, nullptr );
+	Test<char, char>( "abcdefghijklmnopqrstuvwxyz", avl, "p" );
+	Test<char, char>( "abcdefghijklmnopqrstuvwxyz", avl, "a" );
+	Test<char, char>( "abcdefghijklmnopqrstuvwxyz", avl, "z" );
+	Test<char, char>( "abcdefghijklmnopqrstuvwxyz", avl, "e" );
+	Test<char, char>( "abcdefghijklmnopqrstuvwxyz", avl, "y" );
 	
 }

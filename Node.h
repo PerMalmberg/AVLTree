@@ -114,17 +114,15 @@ namespace PM {
 		// Get a pointer to the pointer we need to go via.
 		NodeType** selected = nullptr;
 
-		if( myComparer.AreEqual( key, myKey ) ) {
-			// Can't add same key
-		}
-		else if( myComparer.IsGreater( key, myKey ) ) {
+		if( myComparer.IsGreater( key, myKey ) ) {
 			// Greater than our own key
 			selected = &greater;
 		}
-		else {
+		else if( myComparer.IsLess( key, myKey ) ) {
 			// Less than our own key
 			selected = &less;
 		}
+		// else - equal, can't add key
 
 		if( selected ) {
 			// Do we have a child at that leg?
