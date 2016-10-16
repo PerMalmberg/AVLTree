@@ -1,5 +1,6 @@
 #include "AVLTree.h"
 #include <iostream>
+#include <cstring>
 
 using namespace PM;
 
@@ -89,7 +90,7 @@ public:
 };
 
 template<typename TKey, typename TData>
-void Test( const TKey* input, AVLTree<TKey,TData>& tree, const TKey* deleteKey ) 
+void Test( const TKey* input, AVLTree<TKey,TData>& tree, const TKey* deleteKey )
 {
 	tree.Clear();
 	for( size_t i = 0; i < strlen( input ); ++i ) {
@@ -111,7 +112,7 @@ void Test( bool result, bool expected )
 	std::cout << (result == expected ? "OK" : "FAIL") << std::endl;
 }
 
-void main( void )
+int main( void )
 {
 	// Test cases:
 	//http://stackoverflow.com/questions/3955680/how-to-check-if-my-avl-tree-implementation-is-correct/24064555#24064555
@@ -156,5 +157,6 @@ void main( void )
 	Test<char, char>( "abcdefghijklmnopqrstuvwxyz", avl, "z" );
 	Test<char, char>( "abcdefghijklmnopqrstuvwxyz", avl, "e" );
 	Test<char, char>( "abcdefghijklmnopqrstuvwxyz", avl, "y" );
-	
+
+	return 0;
 }
